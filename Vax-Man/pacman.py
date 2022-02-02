@@ -3,7 +3,7 @@
   
 #import pygame._view
 import pygame
-  
+
 black = (0,0,0)
 white = (255,255,255)
 blue = (0,0,255)
@@ -419,6 +419,15 @@ def startGame():
   monsta_list.add(Clyde)
   all_sprites_list.add(Clyde)
 
+  blinky_instances = [Blinky]
+  pinky_instances = [Pinky]
+  inky_instances = [Inky]
+  clyde_instances = [Clyde]
+
+  ghost_instances = [blinky_instances, pinky_instances, inky_instances, clyde_instances]
+
+  pygame.time.set_timer(pygame.USEREVENT + 1, 1000 * 3)
+
   # Draw the grid
   for row in range(19):
       for column in range(19):
@@ -450,15 +459,16 @@ def startGame():
 
   done = False
 
-  # Current ghosts number
 
-  number_of_ghosts = len(monsta_list)  
 
   i = 0
 
   while done == False:
       # ALL EVENT PROCESSING SHOULD GO BELOW THIS COMMENT
       for event in pygame.event.get():
+          if event.type == pygame.USEREVENT + 1:  # if the timer is up
+              duplicate_ghost(ghost_instances, monsta_list, all_sprites_list)
+        
           if event.type == pygame.QUIT:
               done=True
 
@@ -487,29 +497,37 @@ def startGame():
       # ALL GAME LOGIC SHOULD GO BELOW THIS COMMENT
       Pacman.update(wall_list,gate)
 
-      returned = Pinky.changespeed(Pinky_directions,False,p_turn,p_steps,pl)
-      p_turn = returned[0]
-      p_steps = returned[1]
-      Pinky.changespeed(Pinky_directions,False,p_turn,p_steps,pl)
-      Pinky.update(wall_list,False)
+      # Updating all pinkys
+      for i in range(len(pinky_instances)):
+          returned = pinky_instances[i].changespeed(Pinky_directions, False, p_turn, p_steps, pl)
+          p_turn = returned[0]
+          p_steps = returned[1]
+          pinky_instances[i].changespeed(Pinky_directions, False, p_turn, p_steps, pl)
+          pinky_instances[i].update(wall_list, False)
 
-      returned = Blinky.changespeed(Blinky_directions,False,b_turn,b_steps,bl)
-      b_turn = returned[0]
-      b_steps = returned[1]
-      Blinky.changespeed(Blinky_directions,False,b_turn,b_steps,bl)
-      Blinky.update(wall_list,False)
+      # Updating all blinkys
+      for i in range(len(blinky_instances)):
+          returned = blinky_instances[i].changespeed(Blinky_directions, False, b_turn, b_steps,bl)
+          b_turn = returned[0]
+          b_steps = returned[1]
+          blinky_instances[i].changespeed(Blinky_directions, False, b_turn, b_steps, bl)
+          blinky_instances[i].update(wall_list, False)
 
-      returned = Inky.changespeed(Inky_directions,False,i_turn,i_steps,il)
-      i_turn = returned[0]
-      i_steps = returned[1]
-      Inky.changespeed(Inky_directions,False,i_turn,i_steps,il)
-      Inky.update(wall_list,False)
+      # Updating all inkys
+      for i in range(len(inky_instances)):
+          returned = inky_instances[i].changespeed(Inky_directions, False, i_turn, i_steps, il)
+          i_turn = returned[0]
+          i_steps = returned[1]
+          inky_instances[i].changespeed(Inky_directions, False, i_turn, i_steps, il)
+          inky_instances[i].update(wall_list, False)
 
-      returned = Clyde.changespeed(Clyde_directions,"clyde",c_turn,c_steps,cl)
-      c_turn = returned[0]
-      c_steps = returned[1]
-      Clyde.changespeed(Clyde_directions,"clyde",c_turn,c_steps,cl)
-      Clyde.update(wall_list,False)
+      # Updating all clydes
+      for i in range(len(clyde_instances)):
+          returned = clyde_instances[i].changespeed(Clyde_directions, False, c_turn, c_steps, cl)
+          c_turn = returned[0]
+          c_steps = returned[1]
+          clyde_instances[i].changespeed(Clyde_directions, False, c_turn, c_steps, cl)
+          clyde_instances[i].update(wall_list, False)
 
       # See if the Pacman block has collided with anything.
       blocks_hit_list = pygame.sprite.spritecollide(Pacman, block_list, True)
@@ -539,7 +557,7 @@ def startGame():
 
       text=font.render("Score: "+str(score)+"/"+str(bll), True, red)
       screen.blit(text, [10, 10])
-
+      
       if score == bll:
         doNext("Congratulations, you won!",145,all_sprites_list,block_list,monsta_list,pacman_collide,wall_list,gate)
 
@@ -549,8 +567,11 @@ def startGame():
       screen.blit(text, [400, 10])
 
       # Exist Ghost Number
-      text=font.render("Ghost: "+str(number_of_ghosts), True, purple)
+      text=font.render("Ghost: "+str(len(monsta_list)), True, purple)
       screen.blit(text, [225, 10])
+
+      if len(monsta_list) >= 128:
+        doNext("Game Over",235,all_sprites_list,block_list,monsta_list,pacman_collide,wall_list,gate)
 
       #if monsta_hit_list:
         #doNext("Game Over",235,all_sprites_list,block_list,monsta_list,pacman_collide,wall_list,gate)
@@ -560,6 +581,8 @@ def startGame():
       pygame.display.flip()
     
       clock.tick(10)
+
+
 
 def doNext(message,left,all_sprites_list,block_list,monsta_list,pacman_collide,wall_list,gate):
   while True:
@@ -597,6 +620,42 @@ def doNext(message,left,all_sprites_list,block_list,monsta_list,pacman_collide,w
       pygame.display.flip()
 
       clock.tick(10)
+
+def duplicate_ghost(gi, monsta_list, asl):
+    if len(gi[0]) < 32:
+        for k in range(len(gi[0])):  # create X blinkys (X = the number of existing blinkys)
+            b = Ghost(w, b_h, "images/Blinky.png")
+
+            gi[0].append(b)
+            monsta_list.add(b)
+            asl.add(b)
+
+    if len(gi[1]) < 32:
+        for k in range(len(gi[1])):  # create X pinkys (X = the number of existing pinkys)
+            p = Ghost(w, b_h, "images/Pinky.png")
+
+            gi[1].append(p)
+            monsta_list.add(p)
+            asl.add(p)
+
+    if len(gi[2]) < 32:
+        for k in range(len(gi[2])):  # create X inkys (X = the number of existing inkys)
+            i = Ghost(w, b_h, "images/Inky.png")
+
+            gi[2].append(i)
+            monsta_list.add(i)
+            asl.add(i)
+
+    if len(gi[3]) < 32:
+        for k in range(len(gi[3])):  # create X clydes (X = the number of existing clydes)
+            c = Ghost(w, b_h, "images/Clyde.png")
+
+            gi[3].append(c)
+            monsta_list.add(c)
+            asl.add(c)
+
+    pygame.time.set_timer(pygame.USEREVENT + 1, 1000 * 3)  # reset the timer
+
 
 startGame()
 
